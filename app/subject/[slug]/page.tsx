@@ -14,21 +14,17 @@ async function getSubject(slug: string) {
   return subject ? JSON.parse(JSON.stringify(subject)) : null;
 }
 
-// Updated PageProps: params and searchParams are Promises
 interface PageProps {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  // searchParams is intentionally omitted – client component will use useSearchParams
 }
 
-export default async function SubjectPage({ params, searchParams }: PageProps) {
-  // Resolve the Promises first
+export default async function SubjectPage({ params }: PageProps) {
   const { slug } = await params;
-  const resolvedSearchParams = await searchParams;
 
   const subject = await getSubject(slug);
   if (!subject) notFound();
 
-  // Fetch distinct chapters and years for filter dropdowns
   await dbConnect();
   const queryFilter: any = {};
   if (subject.type === "GS" && subject.mapping?.gs_paper) {
@@ -40,6 +36,9 @@ export default async function SubjectPage({ params, searchParams }: PageProps) {
   const chapters = await Question.distinct("classification.chapter", queryFilter);
   const years = await Question.distinct("enrichment.year", queryFilter);
 
+  // Type‑safe filter: remove null/undefined, keep only numbers
+  const validYears = years.filter((y): y is number => y !== null && y !== undefined).sort();
+
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900 mb-6">
@@ -48,9 +47,8 @@ export default async function SubjectPage({ params, searchParams }: PageProps) {
       <Suspense fallback={<LoadingSpinner />}>
         <QuestionListClient
           subject={subject}
-          searchParams={resolvedSearchParams}   // plain object, no longer a Promise
           availableChapters={chapters}
-          availableYears={years.filter(Boolean).sort()}
+          availableYears={validYears}
         />
       </Suspense>
     </div>

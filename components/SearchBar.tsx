@@ -14,11 +14,12 @@ export default function SearchBar({
   onSearch: (query: string) => void;
   placeholder?: string;
 }) {
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState<string>("");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const debounceRef = useRef<NodeJS.Timeout>();
+  const [showDropdown, setShowDropdown] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  // Use number for browser setTimeout ID (instead of NodeJS.Timeout)
+  const debounceRef = useRef<number | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -39,7 +40,7 @@ export default function SearchBar({
     }
     setLoading(true);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(async () => {
+    debounceRef.current = window.setTimeout(async () => {
       try {
         const res = await fetch(`/api/search?q=${encodeURIComponent(value)}&mode=autocomplete`);
         const data = await res.json();
@@ -50,7 +51,9 @@ export default function SearchBar({
       }
       setLoading(false);
     }, 300);
-    return () => clearTimeout(debounceRef.current);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
   }, [value]);
 
   const clearSearch = () => {
