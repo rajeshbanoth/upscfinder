@@ -6,10 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "copy-pdf-worker": "node node_modules/next-react-pdf/scripts/copy-worker.js",
-    "predev": "npm run copy-pdf-worker",
-    "prebuild": "npm run copy-pdf-worker"
+    "lint": "eslint"
+ 
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
